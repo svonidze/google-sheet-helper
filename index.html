@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <script>    
+        function setProcessingStatus(status) {
+            var div = document.getElementById('mainform');
+            div.innerHTML = '<div>' + status + '</div>';
+        }
+        function onSuccess(event) {
+            setProcessingStatus('Sucess!');
+            console.info('Sucess', event);
+        }
+
+        function onFailure(event) {
+            setProcessingStatus('Fail!');
+            console.error('Fail', event);
+        }
+
+        function openFile(event) {
+            var input = event.target;
+            const file = input.files[0];
+            if(!file) { 
+                console.warn('No file selected');
+                return;
+            }
+
+            var encoding = document.getElementById('input-encodings');
+            var reader = new FileReader();
+            reader.onload = function () {
+                setProcessingStatus('Processing...');
+                var text = reader.result;
+
+                var delimiter = document.getElementById('input-delimiters');
+
+                console.log(file.name, delimiter.value, delimiter);
+
+                google.script.run
+                    .withSuccessHandler(onSuccess)
+                    .withFailureHandler(onFailure)
+                    .parseCsvAndAppend(reader.result, delimiter.value, file.name);
+
+            };
+            reader.readAsText(file, encoding.value);
+        }
+    </script>
+</head>
+
+<body>
+    <label>
+        <input type="file" name="input-name" accept='.csv' onchange='openFile(event)' />
+        <span>Select file</span>
+    </label>
+
+    <select id="input-delimiters">
+        <option value=",">, (comma)</option>
+        <option value=";" selected>; (semicolon)</option>
+        <option value="	">\t (tab)</option>
+    </select>
+    <select id="input-encodings">
+        <option value="utf8">UTF8</option>
+        <option value="windows-1251" selected>Cyrillic (Windows-1251)</option>
+    </select>
+
+    <div id='mainform' />
+    <div id='output' />
+</body>
+
+</html>
